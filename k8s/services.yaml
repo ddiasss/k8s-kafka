@@ -1,0 +1,76 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+  labels:
+    app: order-app
+    tier: backend
+spec:
+  type: NodePort
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 31711
+  selector:
+    app: order-app
+    tier: backend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-app
+  template:
+    metadata:
+      name: order-app
+      labels:
+        app: order-app
+        tier: backend
+    spec:
+      containers:
+        - name: order-service
+          image: my-store/order-service:latest
+          imagePullPolicy: Never
+          resources:
+            limits:
+              cpu: "1"
+              memory: "1024M"
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: db-secret
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stock-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stock-app
+  template:
+    metadata:
+      name: stock-app
+      labels:
+        app: stock-app
+        tier: backend
+    spec:
+      containers:
+        - name: stock-service
+          image: my-store/stock-service:latest
+          imagePullPolicy: Never
+          resources:
+            limits:
+              cpu: "1"
+              memory: "1024M"
+          ports:
+            - containerPort: 8081
+          envFrom:
+            - secretRef:
+                name: db-secret
